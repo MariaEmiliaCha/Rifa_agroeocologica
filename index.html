@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa Solidaria - Ingeniería Agroambiental UTEC</title>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         body {
             font-family: Calibri, Arial, sans-serif;
@@ -25,19 +26,24 @@
             display: block;
             margin-bottom: 10px;
         }
-        input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
         select {
             width: 100%;
             height: 150px;
+        }
+        #numerosContainer {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+        .numero-btn {
+            padding: 5px;
+            text-align: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .numero-btn.selected {
+            background-color: #4CAF50;
+            color: white;
         }
     </style>
 </head>
@@ -61,39 +67,84 @@
     <form id="rifaForm">
         <label for="nombre">Nombre:</label>
         <input type="text" id="nombre" name="nombre" required>
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        
+                
         <label for="telefono">Teléfono:</label>
         <input type="tel" id="telefono" name="telefono" required>
         
-        <label for="numeros">Seleccione sus números:</label>
-        <select id="numeros" name="numeros" multiple required>
-            <!-- Generamos opciones del 1 al 500 -->
-            <script>
-                for(let i = 1; i <= 500; i++) {
-                    document.write(`<option value="${i}">${i}</option>`);
-                }
-            </script>
-        </select>
+        <label>Seleccione sus números:</label>
+        <div id="numerosContainer"></div>
         
         <p>Total a pagar: $<span id="total">0</span></p>
         
-        <input type="submit" value="Proceder al pago">
+        <div id="wallet_container"></div>
     </form>
+
     <script>
-        const form = document.getElementById('rifaForm');
-        const numerosSelect = document.getElementById('numeros');
+        // Configurar MercadoPago
+        const mp = new MercadoPago('TU_PUBLIC_KEY_AQUI');
+
+        const numerosContainer = document.getElementById('numerosContainer');
         const totalSpan = document.getElementById('total');
-        numerosSelect.addEventListener('change', function() {
-            const selectedNumbers = numerosSelect.selectedOptions.length;
-            const total = selectedNumbers * 150;
+        let numerosSeleccionados = [];
+
+        // Generar botones para los números
+        for (let i = 1; i <= 500; i++) {
+            const button = document.createElement('div');
+            button.textContent = i;
+            button.className = 'numero-btn';
+            button.onclick = () => seleccionarNumero(i, button);
+            numerosContainer.appendChild(button);
+        }
+
+        function seleccionarNumero(numero, button) {
+            const index = numerosSeleccionados.indexOf(numero);
+            if (index > -1) {
+                numerosSeleccionados.splice(index, 1);
+                button.classList.remove('selected');
+            } else {
+                numerosSeleccionados.push(numero);
+                button.classList.add('selected');
+            }
+            actualizarTotal();
+        }
+
+        function actualizarTotal() {
+            const total = numerosSeleccionados.length * 150;
             totalSpan.textContent = total;
-        });
-        form.addEventListener('submit', function(e) {
+            
+            // Actualizar el botón de pago de MercadoPago
+            if (total > 0) {
+                crearBotonPago(total);
+            } else {
+                document.getElementById('wallet_container').innerHTML = '';
+            }
+        }
+
+        function crearBotonPago(monto) {
+            mp.checkout({
+                preference: {
+                    items: [
+                        {
+                            title: 'Números de Rifa',
+                            unit_price: 150,
+                            quantity: numerosSeleccionados.length,
+                        }
+                    ]
+                },
+                render: {
+                    container: '#wallet_container',
+                    label: 'Pagar con MercadoPago'
+                }
+            });
+        }
+
+        document.getElementById('rifaForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Aquí se implementaría la lógica para redirigir a MercadoPago');
+            if (numerosSeleccionados.length === 0) {
+                alert('Por favor, seleccione al menos un número.');
+                return;
+            }
+            // El botón de MercadoPago manejará el proceso de pago
         });
     </script>
 </body>
