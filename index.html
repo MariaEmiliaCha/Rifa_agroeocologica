@@ -5,15 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa Solidaria - Ingeniería Agroambiental UTEC</title>
     <style>
-        /* ... (estilos previos sin cambios) ... */
+        body {
+            font-family: Calibri, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #90EE90; /* Verde claro */
+            color: black;
+        }
+        h1, h2 {
+            color: black;
+        }
+        form {
+            margin-top: 20px;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #numerosContainer {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .numero-btn {
+            padding: 5px;
+            text-align: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .numero-btn.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #pagarButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #pagarButton:hover {
+            background-color: #45a049;
+        }
+        #pagarButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
-    <!-- ... (contenido HTML previo sin cambios) ... -->
-
+    <h1>Rifa Solidaria - Ingeniería Agroambiental UTEC</h1>
+    
+    <h2>Nuestra Causa</h2>
+    <p>Somos 4 estudiantes de Ingeniería Agroambiental de la UTEC y organizamos esta rifa solidaria para recaudar fondos para participar y presentar los resultados de nuestros proyectos en el X Congreso Latinoamericano de Agroecología, que se realizará entre los días 23 al 25 de octubre, en Asunción, Paraguay.</p>
+    <p>¡Con su colaboración podremos representar a Uruguay en este importante evento!</p>
+    
+    <h2>Premios</h2>
+    <ul>
+        <li>1er Premio: Whisky Chivas Regal 12 años</li>
+        <li>2do Premio: Canasta Agroecológica</li>
+        <li>3er Premio: Picada Completa</li>
+    </ul>
+    
+    <h2>Comprar Números</h2>
+    <p>Costo por número: $150 pesos uruguayos</p>
+    
     <form id="rifaForm">
         <label for="nombre">Nombre:</label>
         <input type="text" id="nombre" name="nombre" required>
+        
         
         <label for="telefono">Teléfono:</label>
         <input type="tel" id="telefono" name="telefono" required>
@@ -65,7 +130,7 @@
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
             
-            if (!nombre || !telefono) {
+            if (!nombre || !email || !telefono) {
                 alert('Por favor, complete todos los campos antes de proceder al pago.');
                 return;
             }
@@ -74,36 +139,11 @@
             const numerosComprados = numerosSeleccionados.join(', ');
             
             // Construir la URL con los parámetros
-            const urlPago = `${urlPagoBase}?precio=${total}&numeros=${numerosComprados}&nombre=${encodeURIComponent(nombre)}&telefono=${encodeURIComponent(telefono)}`;
-            
-            // Registrar los datos en GitHub
-            registrarDatosEnGitHub(nombre, telefono, numerosComprados, total);
+            const urlPago = `${urlPagoBase}?precio=${total}&numeros=${numerosComprados}&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&telefono=${encodeURIComponent(telefono)}`;
             
             // Redirigir a la página de pago
             window.location.href = urlPago;
         });
-
-        function registrarDatosEnGitHub(nombre, telefono, numeros, total) {
-            const datos = {
-                nombre: nombre,
-                telefono: telefono,
-                numeros: numeros,
-                total: total,
-                fecha: new Date().toISOString()
-            };
-
-            // Aquí deberías hacer una llamada a tu backend para registrar los datos en GitHub
-            fetch('/api/registrar-compra', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(datos)
-            })
-            .then(response => response.json())
-            .then(data => console.log('Compra registrada:', data))
-            .catch((error) => console.error('Error:', error));
-        }
     </script>
 </body>
 </html>
