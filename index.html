@@ -6,15 +6,17 @@
     <title>Rifa Solidaria - Ingeniería Agroambiental UTEC</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Calibri, Arial, sans-serif;
             line-height: 1.6;
             margin: 0;
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
+            background-color: #90EE90; /* Verde claro */
+            color: black;
         }
         h1, h2 {
-            color: #333;
+            color: black;
         }
         form {
             margin-top: 20px;
@@ -33,6 +35,10 @@
         input[type="submit"]:hover {
             background-color: #45a049;
         }
+        select {
+            width: 100%;
+            height: 150px;
+        }
     </style>
 </head>
 <body>
@@ -44,9 +50,9 @@
     
     <h2>Premios</h2>
     <ul>
-        <li>1er Premio: Gafas inteligentes</li>
-        <li>2do Premio: Reloj inteligente</li>
-        <li>3er Premio: Whisky Chivas Regal 12 años</li>
+        <li>1er Premio: Whisky Chivas Regal 12 años</li>
+        <li>2do Premio: Canasta Agroecológica</li>
+        <li>3er Premio: Picada Completa</li>
     </ul>
     
     <h2>Comprar Números</h2>
@@ -76,18 +82,15 @@
         
         <input type="submit" value="Proceder al pago">
     </form>
-
     <script>
         const form = document.getElementById('rifaForm');
         const numerosSelect = document.getElementById('numeros');
         const totalSpan = document.getElementById('total');
-
         numerosSelect.addEventListener('change', function() {
             const selectedNumbers = numerosSelect.selectedOptions.length;
             const total = selectedNumbers * 150;
             totalSpan.textContent = total;
         });
-
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             alert('Aquí se implementaría la lógica para redirigir a MercadoPago');
