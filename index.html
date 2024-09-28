@@ -1,149 +1,44 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rifa Solidaria - Ingeniería Agroambiental UTEC</title>
-    <style>
-        body {
-            font-family: Calibri, Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #90EE90; /* Verde claro */
-            color: black;
-        }
-        h1, h2 {
-            color: black;
-        }
-        form {
-            margin-top: 20px;
-        }
-        label, input {
-            display: block;
-            margin-bottom: 10px;
-        }
-        #numerosContainer {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 5px;
-            margin-bottom: 20px;
-        }
-        .numero-btn {
-            padding: 5px;
-            text-align: center;
-            background-color: #f0f0f0;
-            cursor: pointer;
-        }
-        .numero-btn.selected {
-            background-color: #4CAF50;
-            color: white;
-        }
-        #pagarButton {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #pagarButton:hover {
-            background-color: #45a049;
-        }
-        #pagarButton:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body>
-    <h1>Rifa Solidaria - Ingeniería Agroambiental UTEC</h1>
-    
-    <h2>Nuestra Causa</h2>
-    <p>Somos 4 estudiantes de Ingeniería Agroambiental de la UTEC y organizamos esta rifa solidaria para recaudar fondos para participar y presentar los resultados de nuestros proyectos en el X Congreso Latinoamericano de Agroecología, que se realizará entre los días 23 al 25 de octubre, en Asunción, Paraguay.</p>
-    <p>¡Con su colaboración podremos representar a Uruguay en este importante evento!</p>
-    
-    <h2>Premios</h2>
-    <ul>
-        <li>1er Premio: Whisky Chivas Regal 12 años</li>
-        <li>2do Premio: Canasta Agroecológica</li>
-        <li>3er Premio: Picada Completa</li>
-    </ul>
-    
-    <h2>Comprar Números</h2>
-    <p>Costo por número: $150 pesos uruguayos</p>
-    
-    <form id="rifaForm">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre" required>
-        
-        
-        <label for="telefono">Teléfono:</label>
-        <input type="tel" id="telefono" name="telefono" required>
-        
-        <label>Seleccione sus números:</label>
-        <div id="numerosContainer"></div>
-        
-        <p>Total a pagar: $<span id="total">0</span></p>
-        
-        <button id="pagarButton" type="button" disabled>Proceder al pago</button>
-    </form>
+const express = require('express');
+const { Octokit } = require('@octokit/rest');
+const bodyParser = require('body-parser');
+require('dotenv').config();
 
-    <script>
-        const numerosContainer = document.getElementById('numerosContainer');
-        const totalSpan = document.getElementById('total');
-        const pagarButton = document.getElementById('pagarButton');
-        let numerosSeleccionados = [];
-        const precioNumero = 150;
-        const urlPagoBase = 'https://link.mercadopago.com.uy/storeaccess';
+const app = express();
+app.use(bodyParser.json());
 
-        // Generar botones para los números
-        for (let i = 1; i <= 500; i++) {
-            const button = document.createElement('div');
-            button.textContent = i;
-            button.className = 'numero-btn';
-            button.onclick = () => seleccionarNumero(i, button);
-            numerosContainer.appendChild(button);
-        }
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-        function seleccionarNumero(numero, button) {
-            const index = numerosSeleccionados.indexOf(numero);
-            if (index > -1) {
-                numerosSeleccionados.splice(index, 1);
-                button.classList.remove('selected');
-            } else {
-                numerosSeleccionados.push(numero);
-                button.classList.add('selected');
-            }
-            actualizarTotal();
-        }
+app.post('/api/registrar-compra', async (req, res) => {
+    const { nombre, telefono, numeros, total, fecha } = req.body;
 
-        function actualizarTotal() {
-            const total = numerosSeleccionados.length * precioNumero;
-            totalSpan.textContent = total;
-            pagarButton.disabled = total === 0;
-        }
+    const content = `Nombre: ${nombre}\nTeléfono: ${telefono}\nNúmeros: ${numeros}\nTotal: $${total}\nFecha: ${fecha}\n\n`;
 
-        pagarButton.addEventListener('click', function() {
-            const nombre = document.getElementById('nombre').value;
-            const telefono = document.getElementById('telefono').value;
-            
-            if (!nombre || !email || !telefono) {
-                alert('Por favor, complete todos los campos antes de proceder al pago.');
-                return;
-            }
-
-            const total = numerosSeleccionados.length * precioNumero;
-            const numerosComprados = numerosSeleccionados.join(', ');
-            
-            // Construir la URL con los parámetros
-            const urlPago = `${urlPagoBase}?precio=${total}&numeros=${numerosComprados}&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&telefono=${encodeURIComponent(telefono)}`;
-            
-            // Redirigir a la página de pago
-            window.location.href = urlPago;
+    try {
+        // Obtener el contenido actual del archivo
+        const { data: fileData } = await octokit.repos.getContent({
+            owner: 'TuUsuarioDeGitHub',
+            repo: 'TuRepositorio',
+            path: 'registros.txt',
         });
-    </script>
-</body>
-</html>
+
+        let newContent = Buffer.from(fileData.content, 'base64').toString() + content;
+
+        // Actualizar el archivo en GitHub
+        await octokit.repos.createOrUpdateFileContents({
+            owner: 'TuUsuarioDeGitHub',
+            repo: 'TuRepositorio',
+            path: 'registros.txt',
+            message: 'Nuevo registro de compra',
+            content: Buffer.from(newContent).toString('base64'),
+            sha: fileData.sha,
+        });
+
+        res.json({ success: true, message: 'Compra registrada con éxito' });
+    } catch (error) {
+        console.error('Error al registrar la compra:', error);
+        res.status(500).json({ success: false, message: 'Error al registrar la compra' });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
