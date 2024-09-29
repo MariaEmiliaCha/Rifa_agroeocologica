@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa Solidaria - Ingeniería Agroambiental UTEC</title>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         body {
             font-family: Calibri, Arial, sans-serif;
@@ -12,11 +13,16 @@
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
-            background-color: #90EE90; /* Verde claro */
+            background-color: #90EE90;
             color: black;
         }
         h1, h2 {
             color: black;
+        }
+        #logo {
+            max-width: 200px;
+            display: block;
+            margin: 0 auto 20px;
         }
         form {
             margin-top: 20px;
@@ -42,7 +48,7 @@
             color: white;
         }
         #pagarButton {
-            background-color: #4CAF50;
+            background-color: #009ee3;
             color: white;
             padding: 10px 15px;
             border: none;
@@ -50,7 +56,7 @@
             font-size: 16px;
         }
         #pagarButton:hover {
-            background-color: #45a049;
+            background-color: #007bff;
         }
         #pagarButton:disabled {
             background-color: #cccccc;
@@ -59,6 +65,7 @@
     </style>
 </head>
 <body>
+    <img id="logo" src="/api/placeholder/200/100" alt="Logo Rifa Solidaria">
     <h1>Rifa Solidaria - Ingeniería Agroambiental UTEC</h1>
     
     <h2>Nuestra Causa</h2>
@@ -87,16 +94,14 @@
         
         <p>Total a pagar: $<span id="total">0</span></p>
         
-        <button id="pagarButton" type="button" disabled>Proceder al pago</button>
+        <div id="wallet_container"></div>
     </form>
 
     <script>
         const numerosContainer = document.getElementById('numerosContainer');
         const totalSpan = document.getElementById('total');
-        const pagarButton = document.getElementById('pagarButton');
         let numerosSeleccionados = [];
         const precioNumero = 150;
-        const urlPagoBase = 'https://link.mercadopago.com.uy/storeaccess';
 
         // Generar botones para los números
         for (let i = 101; i <= 500; i++) {
@@ -122,26 +127,67 @@
         function actualizarTotal() {
             const total = numerosSeleccionados.length * precioNumero;
             totalSpan.textContent = total;
-            pagarButton.disabled = total === 0;
+            if (total > 0) {
+                initMercadoPago(total);
+            } else {
+                document.getElementById('wallet_container').innerHTML = '';
+            }
         }
 
-        pagarButton.addEventListener('click', function() {
+        // Inicializar Mercado Pago
+        function initMercadoPago(total) {
+            const mp = new MercadoPago('TU_PUBLIC_KEY', {
+                locale: 'es-UY'
+            });
+
+            mp.checkout({
+                preference: {
+                    id: 'TU_PREFERENCE_ID'
+                },
+                render: {
+                    container: '#wallet_container',
+                    label: 'Pagar con Mercado Pago',
+                }
+            });
+        }
+
+        // Función para guardar los datos en GitHub (esto debe ser manejado por un backend)
+        async function guardarEnGitHub(nombre, telefono, numerosComprados) {
+            const datos = {
+                nombre: nombre,
+                telefono: telefono,
+                numeros: numerosComprados.join(', ')
+            };
+
+            try {
+                const response = await fetch('TU_URL_DE_BACKEND/guardar-datos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datos),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al guardar los datos');
+                }
+
+                console.log('Datos guardados exitosamente');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('rifaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
             
-            if (!nombre || !email || !telefono) {
-                alert('Por favor, complete todos los campos antes de proceder al pago.');
-                return;
+            if (numerosSeleccionados.length > 0) {
+                guardarEnGitHub(nombre, telefono, numerosSeleccionados);
+            } else {
+                alert('Por favor, seleccione al menos un número antes de proceder al pago.');
             }
-
-            const total = numerosSeleccionados.length * precioNumero;
-            const numerosComprados = numerosSeleccionados.join(', ');
-            
-            // Construir la URL con los parámetros
-            const urlPago = `${urlPagoBase}?precio=${total}&numeros=${numerosComprados}&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&telefono=${encodeURIComponent(telefono)}`;
-            
-            // Redirigir a la página de pago
-            window.location.href = urlPago;
         });
     </script>
 </body>
